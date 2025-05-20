@@ -27,7 +27,7 @@ def read_in_depth(zarr_path: str) -> np.ndarray:
 def generate_pcd_zarr(
     pcd_array: np.ndarray,
     output_zarr_path: str,
-    chunk_shape: tuple = (1024, 3),
+    chunk_shape: tuple = (1014, 3),#1024
     compressor: Optional[Blosc] = None,
     dataset_name: str = "pointcloud"  # 修正为小写保持一致性
 ) -> None:

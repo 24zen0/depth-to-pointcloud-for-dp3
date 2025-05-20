@@ -19,7 +19,7 @@ import socket
 import pickle
 
 
-def farthest_point_sampling(points, num_points=128000, use_cuda=True): #For test, increase the number of the sampled points. Original: 1024
+def farthest_point_sampling(points, num_points=1014, use_cuda=True): #For test, increase the number of the sampled points. Original: 1014
     #points = np.asarray(points, dtype=np.float32)
     if points.size == 0:
         raise ValueError("输入点云为空数组！")
@@ -41,7 +41,7 @@ def farthest_point_sampling(points, num_points=128000, use_cuda=True): #For test
 
 def preprocess_point_cloud(points, use_cuda=True):
     
-    num_points = 1024
+    num_points = 1014
 
     extrinsics_matrix = np.array([[0.7542, 0.0152, 0.6564, 0.33916],
                                   [-0.6149, 0.3671, 0.6980, 1.21842],

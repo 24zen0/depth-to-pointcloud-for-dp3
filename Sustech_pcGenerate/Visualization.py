@@ -3,9 +3,9 @@ import numpy as np
 import zarr
 
 # 加载Zarr数据
-zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/processed_point_clouds.zarr"
+zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/5_18_simple_2.zarr/data/processed_point_clouds.zarr"
 zarr_root = zarr.open(zarr_path, mode='r')
-point_clouds = zarr_root['pointcloud']  # 形状 [N, 1024, 6]
+point_clouds = zarr_root['pointcloud']  # 形状 [N, 1014, 6]
 
 # 选择帧（例如第1200帧）
 frame_idx = 5
