@@ -16,8 +16,8 @@ def read_in_depth(zarr_path: str) -> np.ndarray:
             
         depth_data = zarr_group["depth"]
         
-        if depth_data.ndim != 2:
-            raise ValueError(f"深度数据应为 2D 数组，但获取到 {depth_data.ndim}D 数据")
+        #if depth_data.ndim != 2:
+         #   raise ValueError(f"深度数据应为 2D 数组，但获取到 {depth_data.ndim}D 数据")
             
         return np.array(depth_data)
         
@@ -34,8 +34,8 @@ def generate_pcd_zarr(
     """
     将点云保存到 Zarr 文件的指定数据集
     """
-    if pcd_array.ndim != 2 or pcd_array.shape[1] != 3:
-        raise ValueError("点云必须是(N,3)形状的数组")
+    #if pcd_array.ndim != 2 or pcd_array.shape[1] != 3:
+     #  raise ValueError("点云必须是(N,3)形状的数组")
 
     if compressor is None:
         compressor = Blosc(cname='zstd', clevel=5, shuffle=2)

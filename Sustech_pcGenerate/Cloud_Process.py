@@ -19,7 +19,12 @@ import socket
 import pickle
 
 
-def farthest_point_sampling(points, num_points=1024, use_cuda=True):
+def farthest_point_sampling(points, num_points=128000, use_cuda=True): #For test, increase the number of the sampled points. Original: 1024
+    #points = np.asarray(points, dtype=np.float32)
+    if points.size == 0:
+        raise ValueError("输入点云为空数组！")
+    if points.ndim != 2 or points.shape[1] != 3:
+        raise ValueError(f"输入需为 (N,3) 数组，但得到形状 {points.shape}")
     K = [num_points]
     if use_cuda:
         points = torch.from_numpy(points).cuda()
@@ -51,7 +56,7 @@ def preprocess_point_cloud(points, use_cuda=True):
     ]
 
     # scale
-    point_xyz = points[..., :3]*0.0002500000118743628
+    point_xyz = points[..., :3]*1.0 #0.0002500000118743628
     point_homogeneous = np.hstack((point_xyz, np.ones((point_xyz.shape[0], 1))))
     point_homogeneous = np.dot(point_homogeneous, extrinsics_matrix)
     point_xyz = point_homogeneous[..., :-1]
