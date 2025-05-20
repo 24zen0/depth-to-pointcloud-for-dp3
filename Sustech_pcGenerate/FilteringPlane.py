@@ -143,7 +143,7 @@ def main():
     
     # ---------------------- 1. 加载数据 ----------------------
     # 定义Zarr文件路径（根据实际路径修改）
-    zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/5_18_simple_2.zarr/data/processed_point_clouds.zarr"
+    zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/metaworld_reach-wall_expert.zarr/data"
     frame_idx = 1  # 选择要处理的帧索引
     
     # 从Zarr文件加载点云数据
