@@ -8,7 +8,7 @@ zarr_root = zarr.open(zarr_path, mode='r')
 point_clouds = zarr_root['pointcloud']  # 形状 [N, 1014, 6]
 
 # 选择帧（例如第1200帧）
-frame_idx = 5
+frame_idx = 1200
 pc_data = point_clouds[frame_idx]
 
 # 仅提取坐标（忽略颜色信息）

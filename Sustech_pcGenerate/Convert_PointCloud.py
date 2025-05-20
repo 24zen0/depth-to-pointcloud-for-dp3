@@ -25,15 +25,24 @@ class PointCloudGenerator(object):
     @param max_bound: If not None, list len(3) containing largest x, y, and z
         values that will not be cropped
     """
-    def __init__(self, sim=None, cam_names=None, img_size=480):
+    def __init__(self, sim, cam_names:List, img_size=84):
+        super(PointCloudGenerator, self).__init__()
+
         self.sim = sim
+
+        # this should be aligned with rgb
         self.img_width = img_size
         self.img_height = img_size
-        self.cam_mat = np.array([
+
+        cam_name = "Realsense D435i"
+
+        # camera intrinsic matrix
+        cam_mat = np.array([
             [385.9849853515625, 0, 318.4468688964844],
             [0, 617.5814819335938, 245.88998413085938],
             [0, 0, 1]
-          ]) 
+        ])
+        self.cam_mat = cam_mat
 
         t = np.array([0.33916, 1.21842, 0.05350])  # in meters
         R = np.array([[0.7542, 0.0152, 0.6564],
@@ -46,19 +55,19 @@ class PointCloudGenerator(object):
         extrinsic_matrix[:3, 3] = t
         self.extrinsic_matrix = extrinsic_matrix
     
-    def generateCroppedPointCloud(self, depth_data, cam_name, save_img_dir=None, device_id=0):
-        #color_img, depth = self.captureImage(cam_name, capture_depth=True, device_id=device_id)
+    def generateCroppedPointCloud(self, cam_name, save_img_dir=None, device_id=0):
+        color_img, depth = self.captureImage(cam_name, capture_depth=True, device_id=device_id)
 
-        #if save_img_dir is not None:
-         #   self.saveImg(depth, save_img_dir, f"depth_test_{cam_name}")
-         #   self.saveImg(color_img, save_img_dir, f"color_test_{cam_name}")
+        if save_img_dir is not None:
+            self.saveImg(depth, save_img_dir, f"depth_test_{cam_name}")
+            self.saveImg(color_img, save_img_dir, f"color_test_{cam_name}")
         
         od_cammat = cammat2o3d(self.cam_mat, self.img_width, self.img_height)
-        od_depth = o3d.geometry.Image(depth_data)
+        od_depth = o3d.geometry.Image(depth)
         o3d_cloud = o3d.geometry.PointCloud.create_from_depth_image(od_depth, od_cammat)
         
         # 计算相机到世界的变换矩阵
         c2w = self.extrinsic_matrix
         transformed_cloud = o3d_cloud.transform(c2w)
 
-        return np.asarray(transformed_cloud.points), depth_data.squeeze()
+        return np.asarray(transformed_cloud.points), depth.squeeze()

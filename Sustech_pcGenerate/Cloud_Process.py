@@ -56,7 +56,7 @@ def preprocess_point_cloud(points, use_cuda=True):
     ]
 
     # scale
-    point_xyz = points[..., :3]*1.0 #0.0002500000118743628
+    point_xyz = points[..., :3]*0.0002500000118743628
     point_homogeneous = np.hstack((point_xyz, np.ones((point_xyz.shape[0], 1))))
     point_homogeneous = np.dot(point_homogeneous, extrinsics_matrix)
     point_xyz = point_homogeneous[..., :-1]
