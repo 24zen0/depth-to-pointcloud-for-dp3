@@ -19,7 +19,7 @@ import socket
 import pickle
 
 
-def farthest_point_sampling(points, num_points=1014, use_cuda=True): #For test, increase the number of the sampled points. Original: 1014
+def farthest_point_sampling(points, num_points=1024, use_cuda=True): #For test, increase the number of the sampled points. Original: 1014
     #points = np.asarray(points, dtype=np.float32)
     if points.size == 0:
         raise ValueError("输入点云为空数组！")
@@ -41,18 +41,18 @@ def farthest_point_sampling(points, num_points=1014, use_cuda=True): #For test, 
 
 def preprocess_point_cloud(points, use_cuda=True):
     
-    num_points = 1014
+    num_points = 1024
 
     extrinsics_matrix = np.array([[0.7542, 0.0152, 0.6564, 0.33916],
                                   [-0.6149, 0.3671, 0.6980, 1.21842],
                                   [-0.2304, -0.9300, 0.2862, 0.05350],
-                                  [0.0000, 0.0000, 0.0000, 1.00]])
+                                  [0.0000, 0.0000, 0.0000, 1.00]])#here the params should be in m or mm
 
 
     WORK_SPACE = [
-        [0.65, 1.1],
-        [0.45, 0.66],
-        [-0.7, 0]
+        [-0.11, 0.318],
+        [-0.178, 0.078],
+        [0.14, 0.55]
     ]
 
     # scale
@@ -74,3 +74,8 @@ def preprocess_point_cloud(points, use_cuda=True):
     points_rgb = points[sample_indices, 3:][0]
     points = np.hstack((points_xyz, points_rgb))
     return points
+
+def boundary(WORK_SPACE):
+    min_bound = np.array([WORK_SPACE[0][0], WORK_SPACE[1][0], WORK_SPACE[2][0]])  # 最小角点 [x_min, y_min, z_min]
+    max_bound = np.array([WORK_SPACE[0][1], WORK_SPACE[1][1], WORK_SPACE[2][1]])  # 最大角点 [x_max, y_max, z_max]
+    return min_bound, max_bound

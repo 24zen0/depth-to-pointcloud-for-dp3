@@ -2,7 +2,7 @@ import os
 import numpy as np
 from Convert_PointCloud import PointCloudGenerator
 from Cloud_Process import preprocess_point_cloud, farthest_point_sampling
-from Inputing_zarr import read_in_depth, generate_pcd_zarr
+from imputing_zarr import read_in_depth, generate_pcd_zarr
 
 # 1. 初始化参数
 zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/5_18_simple_2.zarr/data"
@@ -33,7 +33,7 @@ for i in range(min(10, depth_from_robot.shape[0])):  # 先只处理前10帧用�
     print(f"深度图范围: {np.min(current_depth)} - {np.max(current_depth)}")
     if np.all(current_depth == 0):
         print("警告: 深度图全为零值")
-        all_processed_points.append(np.zeros((1014, 6)))
+        all_processed_points.append(np.zeros((1024, 6)))
         continue
     
     try:
@@ -53,25 +53,22 @@ for i in range(min(10, depth_from_robot.shape[0])):  # 先只处理前10帧用�
         sampled_points, _ = farthest_point_sampling(points)
         print(f"采样后点云形状: {sampled_points.shape}")
         
-        #filtering the walls and desk
-
-
         # 预处理
-        #print("正在预处理点云...")
-        #processed_points = preprocess_point_cloud(sampled_points)
-        #print(f"处理后点云形状: {processed_points.shape}")
+        print("正在预处理点云...")
+        processed_points = preprocess_point_cloud(sampled_points)
+        print(f"处理后点云形状: {processed_points.shape}")
         
         # 验证最终输出
-        if sampled_points.shape == (1014, 3):
+        if sampled_points.shape == (1024, 3):
             all_processed_points.append(sampled_points)
             valid_frames += 1
         else:
             print(f"警告: 无效的输出形状 {sampled_points.shape}")
-            all_processed_points.append(np.zeros((1014, 6)))
+            all_processed_points.append(np.zeros((1024, 6)))
             
     except Exception as e:
         print(f"处理第 {i} 帧时出错: {str(e)}")
-        all_processed_points.append(np.zeros((1014, 6)))
+        all_processed_points.append(np.zeros((1024, 6)))
 
 # 5. 结果统计和保存
 print(f"\n处理完成,有效帧数: {valid_frames}/{depth_from_robot.shape[0]}")
