@@ -4,12 +4,12 @@ import zarr
 from Cloud_Process import boundary
 
 # 加载Zarr数据
-zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/metaworld_reach-wall_expert.zarr/data"
+zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/adroit_hammer_expert.zarr/data"
 zarr_root = zarr.open(zarr_path, mode='r')
-point_clouds = zarr_root['pointcloud']  # 形状 [N, 1024, 6]
+point_clouds = zarr_root['point_cloud']  # 形状 [N, 1024, 6]
 
 # 选择帧（例如第1200帧）
-frame_idx = 5
+frame_idx = 2
 pc_data = point_clouds[frame_idx]
 
 # 仅提取坐标（忽略颜色信息）
@@ -22,13 +22,18 @@ pcd.points = o3d.utility.Vector3dVector(points)
 # 坐标系（红色-X，绿色-Y，蓝色-Z）
 coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2)
 #bounding box
+# WORK_SPACE = [
+#     [-0.082, 0.10], 
+#     [-0.38, 0.065],
+#     [-1.075, -0.75]
+# ]
 WORK_SPACE = [
-    [-0.22, 0.318],
-    [-0.178, 0.078],
-    [0.14, 0.55]
+    [-0.1, 0.27], 
+    [-0.08, 0.4],
+    [-0.075, 0.23]
 ]
 min_bound, max_bound = boundary(WORK_SPACE)
-custom_bbox = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
+custom_bbox = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound) 
 custom_bbox.color = (0, 1, 0)  # 设置为绿色
 # 创建可视化器
 vis = o3d.visualization.Visualizer()

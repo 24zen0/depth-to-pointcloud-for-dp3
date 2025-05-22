@@ -2,11 +2,11 @@ import os
 import numpy as np
 from Convert_PointCloud import PointCloudGenerator
 from Cloud_Process import preprocess_point_cloud, farthest_point_sampling
-from imputing_zarr import read_in_depth, generate_pcd_zarr
+from Inputing_zarr import read_in_depth, generate_pcd_zarr
 
 # 1. 初始化参数
-zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/5_18_simple_2.zarr/data"
-output_zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/5_18_simple_2.zarr/data/processed_point_clouds.zarr"
+zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/adroit_hammer_expert.zarr/data"
+output_zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/adroit_hammer_expert.zarr/data/testpcd"
 cam_name = "Realsense D435i"
 
 # 2. 读取深度数据（添加详细检查）
@@ -25,7 +25,7 @@ print("点云生成器初始化完成")
 all_processed_points = []
 valid_frames = 0
 
-for i in range(min(10, depth_from_robot.shape[0])):  # 先只处理前10帧用于调试
+for i in range(depth_from_robot.shape[0]):
     print(f"\n正在处理第 {i} 帧...")
     current_depth = depth_from_robot[i]
     
@@ -47,16 +47,16 @@ for i in range(min(10, depth_from_robot.shape[0])):  # 先只处理前10帧用�
         
         if not isinstance(points, np.ndarray) or points.size == 0:
             raise ValueError("生成的点云为空")
-            
-        # 最远点采样
-        print("正在进行最远点采样...")
-        sampled_points, _ = farthest_point_sampling(points)
-        print(f"采样后点云形状: {sampled_points.shape}")
         
         # 预处理
         print("正在预处理点云...")
-        processed_points = preprocess_point_cloud(sampled_points)
-        print(f"处理后点云形状: {processed_points.shape}")
+        sampled_points = preprocess_point_cloud(points)
+        print(f"处理后点云形状: {sampled_points.shape}")
+
+        # 最远点采样
+        print("正在进行最远点采样...")
+        processed_points, _ = farthest_point_sampling(sampled_points)
+        print(f"采样后点云形状: {processed_points.shape}")
         
         # 验证最终输出
         if sampled_points.shape == (1024, 3):

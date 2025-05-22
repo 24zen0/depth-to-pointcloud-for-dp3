@@ -43,17 +43,26 @@ def preprocess_point_cloud(points, use_cuda=True):
     
     num_points = 1024
 
-    extrinsics_matrix = np.array([[0.7542, 0.0152, 0.6564, 0.33916],
-                                  [-0.6149, 0.3671, 0.6980, 1.21842],
-                                  [-0.2304, -0.9300, 0.2862, 0.05350],
-                                  [0.0000, 0.0000, 0.0000, 1.00]])#here the params should be in m or mm
+    # 正确写法（添加逗号）
+    extrinsics_matrix = np.array([
+        [-0.99999873, 0.00159265, 0, 0],
+        [0.00159265, 0.99999873, 0, 0],
+        [0, 0, -1, 0],
+        [0, 0, 0, 1]
+    ])
 
-
+#box for our own point cloud
+    # WORK_SPACE = [
+    #     [-0.082, 0.10], 
+    #     [-0.38, 0.065],
+    #     [-1.075, -0.75]
+    # ]
+    #box for adroit's point cloud
     WORK_SPACE = [
-        [-0.11, 0.318],
-        [-0.178, 0.078],
-        [0.14, 0.55]
-    ]
+    [-0.1, 0.27], 
+    [-0.08, 0.4],
+    [-0.075, 0.23]
+]
 
     # scale
     point_xyz = points[..., :3]*0.0002500000118743628
@@ -64,8 +73,8 @@ def preprocess_point_cloud(points, use_cuda=True):
     
      # crop
     points = points[np.where((points[..., 0] > WORK_SPACE[0][0]) & (points[..., 0] < WORK_SPACE[0][1]) &
-                                (points[..., 1] > WORK_SPACE[1][0]) & (points[..., 1] < WORK_SPACE[1][1]) &
-                                (points[..., 2] > WORK_SPACE[2][0]) & (points[..., 2] < WORK_SPACE[2][1]))]
+                                 (points[..., 1] > WORK_SPACE[1][0]) & (points[..., 1] < WORK_SPACE[1][1]) &
+                                 (points[..., 2] > WORK_SPACE[2][0]) & (points[..., 2] < WORK_SPACE[2][1]))]
 
     
     points_xyz = points[..., :3]
