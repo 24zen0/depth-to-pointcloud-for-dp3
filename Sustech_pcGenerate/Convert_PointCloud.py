@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from PIL import Image as PIL_Image
 from typing import List
 import open3d as o3d
-import mujoco
 
 def cammat2o3d(cam_mat, width, height):
     cx = cam_mat[0,2]
@@ -19,26 +18,24 @@ class PointCloudGenerator(object):
     """
     initialization function
 
-    @param sim:       MuJoCo simulation object
     @param min_bound: If not None, list len(3) containing smallest x, y, and z
         values that will not be cropped
     @param max_bound: If not None, list len(3) containing largest x, y, and z
         values that will not be cropped
     """
-    def __init__(self, sim=None, cam_names=None, img_size=480):
-        self.sim = sim
+    def __init__(self,  img_size=480):
         self.img_width = img_size
         self.img_height = img_size
         self.cam_mat = np.array([
-            [101.39696962, 0, 42],
-            [0, 101.39696962, 42],
+            [390.64122761, 0, 450.30159532],
+            [0, 392.57988967, 200.70517741],
             [0, 0, 1]
           ]) 
 
-        t = np.array([0,0,0])  # in meters
-        R = np.array([[-0.99999873, 0.00159265, 0],
-                      [0.00159265,  0.99999873,  0],
-                      [0,0,-1]])        
+        t = np.array([0.33916, 1.21842, 0.05350])  # in meters
+        R = np.array([[0.7542, 0.0152, 0.6564],
+                      [-0.6149, 0.3671, 0.6980],
+                      [-0.2304, -0.9300, 0.2862]])        
 
         # 构建 4x4 变换矩阵
         extrinsic_matrix = np.eye(4)
@@ -46,7 +43,7 @@ class PointCloudGenerator(object):
         extrinsic_matrix[:3, 3] = t
         self.extrinsic_matrix = extrinsic_matrix
     
-    def generateCroppedPointCloud(self, depth_data, cam_name, save_img_dir=None, device_id=0):
+    def generateCroppedPointCloud(self, depth_data, save_img_dir=None, device_id=0):
         #color_img, depth = self.captureImage(cam_name, capture_depth=True, device_id=device_id)
 
         #if save_img_dir is not None:

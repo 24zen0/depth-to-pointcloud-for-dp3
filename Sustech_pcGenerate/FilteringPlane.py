@@ -143,7 +143,7 @@ def main():
     
     # ---------------------- 1. 加载数据 ----------------------
     # 定义Zarr文件路径（根据实际路径修改）
-    zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/metaworld_reach-wall_expert.zarr/data"
+    zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/5_18_simple_2.zarr/data/processed_point_clouds.zarr"
     frame_idx = 1  # 选择要处理的帧索引
     
     # 从Zarr文件加载点云数据
@@ -155,7 +155,7 @@ def main():
     points = pc_data[:, :3]  # 仅取x,y,z坐标
 
     # 添加数据验证
-    print(f"加载数据形状: {points.shape}")  # 应该输出 (1014, 3)
+    print(f"加载数据形状: {points.shape}")  # 应该输出 (1024, 3)
     if points.shape[0] == 0:
         raise ValueError("加载的点云数据为空！检查文件路径和帧索引")
     
@@ -167,10 +167,10 @@ def main():
     # ---------------------- 2. 平面过滤处理 ----------------------
     # 创建平面过滤器实例（参数可根据需要调整）
     filter = FilterPlane(
-        distance_threshold=10, 
+        distance_threshold=0.001, 
         ransac_n=3,
-        max_iterations=500000,
-        min_plane_points=6
+        max_iterations=50000,
+        min_plane_points=100
     )
     
     # 执行平面过滤，得到去除平面后的剩余点云
