@@ -50,10 +50,11 @@ def preprocess_point_cloud(points, use_cuda=True):
     #original good one by wyg
  
     WORK_SPACE = [
-    [-0.11, 0.055],
+    [-0.14, 0.12],
     [-0.12, 0.1],
-    [0.1, 0.3]
+    [0.1, 0.35]
 ]
+
     # scale
     point_xyz = points[..., :3]*0.0002500000118743628
     point_homogeneous = np.hstack((point_xyz, np.ones((point_xyz.shape[0], 1))))
@@ -68,11 +69,8 @@ def preprocess_point_cloud(points, use_cuda=True):
 
     
     points_xyz = points[..., :3]
-    points_xyz, sample_indices = farthest_point_sampling(points_xyz, num_points, use_cuda)
-    sample_indices = sample_indices.cpu()
-    points_rgb = points[sample_indices, 3:][0]
-    points = np.hstack((points_xyz, points_rgb))
-    return points
+    points_xyz, _= farthest_point_sampling(points_xyz, num_points, use_cuda)
+    return points_xyz
 
 def boundary(WORK_SPACE):
     min_bound = np.array([WORK_SPACE[0][0], WORK_SPACE[1][0], WORK_SPACE[2][0]])  # 最小角点 [x_min, y_min, z_min]

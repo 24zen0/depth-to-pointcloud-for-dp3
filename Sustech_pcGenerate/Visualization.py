@@ -4,7 +4,7 @@ import zarr
 from Cloud_Process import boundary
 
 # 加载Zarr数据
-zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/5_18_simple_2.zarr/data/processed_point_clouds.zarr"
+zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/5_26.zarr/data/realpcd"
 zarr_root = zarr.open(zarr_path, mode='r')
 point_clouds = zarr_root['pointcloud']  # 形状 [N, 1024, 6]
 
@@ -23,7 +23,7 @@ pcd.points = o3d.utility.Vector3dVector(points)
 coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2)
 #bounding box
 WORK_SPACE = [
-    [-0.11, 0.055],
+    [-0.14, 0.12],
     [-0.12, 0.1],
     [0.1, 0.35]
 ]

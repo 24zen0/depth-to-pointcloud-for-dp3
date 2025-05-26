@@ -19,8 +19,7 @@ def visualize_depth_image(zarr_path, frame_idx=0):
         
         if 'depth' not in zarr_root:
             print("错误：Zarr文件中没有找到'depth'数据集")
-            return None  # 返回None表示失败
-            
+            return None  # 返回None表示失败            
         depth = zarr_root['depth']
         print(f"深度数据形状: {depth.shape}, 数据类型: {depth.dtype}")
         
