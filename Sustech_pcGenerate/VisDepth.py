@@ -20,9 +20,11 @@ def visualize_depth_image(zarr_path, frame_idx=0):
         if 'depth' not in zarr_root:
             print("错误：Zarr文件中没有找到'depth'数据集")
             return None  # 返回None表示失败
-            
+
         depth = zarr_root['depth']
         print(f"深度数据形状: {depth.shape}, 数据类型: {depth.dtype}")
+        print("Zarr 数据类型:", depth.dtype)  # 应为 uint16
+        print("Zarr 数据形状:", depth.shape)  # 应为 (H, W)，例如 (480, 640)
         
         # 打印shape[0]和shape[1:]
         print(f"总帧数(depth.shape[0]): {depth.shape[0]}")

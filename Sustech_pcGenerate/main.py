@@ -9,8 +9,8 @@ import zarr
 from typing import List, Tuple, Optional
 
 # 1. 初始化参数
-zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/metaworld_push-wall_expert.zarr/data"
-output_zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/metaworld_push-wall_expert.zarr/data/metapcd"
+zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/depth_data/zarr/depth_data.zarr1"
+output_zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/depth_data/zarr/depth_data.zarr1/testpcd.zarr"
 
 
 # 2. 读取深度数据（添加详细检查）
@@ -64,7 +64,7 @@ for i, current_depth in enumerate(selected_frames, start=start):
         print(f"原始点云点数: {len(pcd.points)}")
         # 创建平面过滤器实例（参数可根据需要调整）
         filter = FilterPlane(
-        distance_threshold=0.001, 
+        distance_threshold=0, 
         ransac_n=3,
         max_iterations=1000,
         min_plane_points=100

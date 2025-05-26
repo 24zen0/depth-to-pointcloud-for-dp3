@@ -66,9 +66,13 @@ class PointCloudGenerator(object):
         #if save_img_dir is not None:
          #   self.saveImg(depth, save_img_dir, f"depth_test_{cam_name}")
          #   self.saveImg(color_img, save_img_dir, f"color_test_{cam_name}")
-        
+        print("转换前连续性:", depth_data.flags['C_CONTIGUOUS'])  # the result is true ,which means it is continuous
+        depth_data = (depth_data * 1000).astype(np.uint16)
+        assert depth_data.dtype in [np.uint16, np.float32], "深度图数据类型需为 uint16 或 float32"
         od_cammat = cammat2o3d(self.cam_mat, self.img_width, self.img_height)
+        print("alive still")
         od_depth = o3d.geometry.Image(depth_data)
+        print("alive still1")
         o3d_cloud = o3d.geometry.PointCloud.create_from_depth_image(od_depth, od_cammat)
         
         # 计算相机到世界的变换矩阵

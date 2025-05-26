@@ -54,18 +54,17 @@ def preprocess_point_cloud(points, use_cuda=True):
         [0.,  0., -1.,  0.],
         [0.,  0.,  0.,  1.]
     ])
-    #original good one by wyg
- 
+#before we used in the millimeter,now we use in the meter
     # WORK_SPACE = [
-    # [-0.11, 0.055],
-    # [-0.12, 0.1],
-    # [0.1, 0.3]
-# ]
+    #     [-0.3, 0.5],
+    #     [-0.45, 0.1],
+    #     [-0.6, -0.13]
+    # ]
     WORK_SPACE = [
-        [-0.3, 0.5],
-        [-0.45, 0.1],
-        [-0.6, -0.13]
-    ]
+    [-300, 600],    # X范围（毫米）
+    [-750, -450],    # Y范围
+    [-850, -70]    # Z范围
+]
     # # scale
     # point_xyz = points[..., :3]*0.0002500000118743628
     # point_homogeneous = np.hstack((point_xyz, np.ones((point_xyz.shape[0], 1))))
