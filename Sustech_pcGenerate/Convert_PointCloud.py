@@ -26,21 +26,38 @@ class PointCloudGenerator(object):
     def __init__(self,  img_size=480):
         self.img_width = img_size
         self.img_height = img_size
+        # self.cam_mat = np.array([
+        #     [390.64122761, 0, 450.30159532],
+        #     [0, 392.57988967, 200.70517741],
+        #     [0, 0, 1]
+        #   ]) 
+        # self.cam_mat = np.array([
+        # [110.85125168,   0.,          64.,        ],
+        # [  0.,         110.85125168,  64. ,       ],
+        # [  0.    ,       0.     ,      1.        ]
+        # ])
+        #push-wall
         self.cam_mat = np.array([
-            [390.64122761, 0, 450.30159532],
-            [0, 392.57988967, 200.70517741],
-            [0, 0, 1]
-          ]) 
+            [101.39696962,   0.,          42.        ],
+            [  0.,         101.39696962,  42.        ],
+            [  0.,           0.,          1.        ]
+        ])
 
-        t = np.array([0.33916, 1.21842, 0.05350])  # in meters
-        R = np.array([[0.7542, 0.0152, 0.6564],
-                      [-0.6149, 0.3671, 0.6980],
-                      [-0.2304, -0.9300, 0.2862]])        
+        # t = np.array([0.33916, 1.21842, 0.05350])  # in meters
+        # R = np.array([[0.7542, 0.0152, 0.6564],
+        #               [-0.6149, 0.3671, 0.6980],
+        #               [-0.2304, -0.9300, 0.2862]])  
+        extrinsic_matrix = np.array([
+            [1.,  0.,  0.,  0.],
+            [0., -1.,  0.,  0.],
+            [0.,  0., -1.,  0.],
+            [0.,  0.,  0.,  1.]
+        ])
 
         # 构建 4x4 变换矩阵
-        extrinsic_matrix = np.eye(4)
-        extrinsic_matrix[:3, :3] = R
-        extrinsic_matrix[:3, 3] = t
+        # extrinsic_matrix = np.eye(4)
+        # extrinsic_matrix[:3, :3] = R
+        # extrinsic_matrix[:3, 3] = t
         self.extrinsic_matrix = extrinsic_matrix
     
     def generateCroppedPointCloud(self, depth_data, save_img_dir=None, device_id=0):

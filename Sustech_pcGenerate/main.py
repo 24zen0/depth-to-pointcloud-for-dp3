@@ -9,8 +9,8 @@ import zarr
 from typing import List, Tuple, Optional
 
 # 1. 初始化参数
-zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/5_18_simple_2.zarr/data"
-output_zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/5_18_simple_2.zarr/data/processed_point_clouds.zarr"
+zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/metaworld_push-wall_expert.zarr/data"
+output_zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/metaworld_push-wall_expert.zarr/data/metapcd"
 
 
 # 2. 读取深度数据（添加详细检查）
@@ -32,7 +32,7 @@ valid_frames = 0
 # for i in range(min(1, depth_from_robot.shape[0])):  # 先只处理前5帧用于调试
 
 # switch a method for looping:
-start, end = 100, 100  # 想要的范围
+start, end = 1, 1  # 想要的范围
 selected_frames = depth_from_robot[start : end+1]  # 切片获取980-984（共5帧）
 
 for i, current_depth in enumerate(selected_frames, start=start): 
@@ -64,7 +64,7 @@ for i, current_depth in enumerate(selected_frames, start=start):
         print(f"原始点云点数: {len(pcd.points)}")
         # 创建平面过滤器实例（参数可根据需要调整）
         filter = FilterPlane(
-        distance_threshold=1, 
+        distance_threshold=0.001, 
         ransac_n=3,
         max_iterations=1000,
         min_plane_points=100
@@ -81,8 +81,13 @@ for i, current_depth in enumerate(selected_frames, start=start):
 
         # 转换为NumPy数组并采样
         filtered_points_np = np.asarray(filtered_pcd.points)
-        processed_points = preprocess_point_cloud(filtered_points_np)  # 确保输入为NumPy数组
+        processed_points = preprocess_point_cloud(filtered_points_np,use_cuda=True)  # 确保输入为NumPy数组
         print(f"处理后点云形状: {processed_points.shape}")
+        #this is because the pcd couldn't be seen,so the range should be printed
+        print("处理后的点云范围：")
+        print("X: min={}, max={}".format(np.min(processed_points[:,0]), np.max(processed_points[:,0])))
+        print("Y: min={}, max={}".format(np.min(processed_points[:,1]), np.max(processed_points[:,1])))
+        print("Z: min={}, max={}".format(np.min(processed_points[:,2]), np.max(processed_points[:,2])))
         
         
         # 验证最终输出
