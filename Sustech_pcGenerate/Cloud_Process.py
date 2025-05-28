@@ -40,36 +40,22 @@ def farthest_point_sampling(points, num_points=1024, use_cuda=True): #For test, 
     return sampled_points, indices
 
 def preprocess_point_cloud(points, use_cuda=True):
-    
     num_points = 1024
 
-    extrinsics_matrix = np.array([[0.7542, 0.0152, 0.6564, 0.33916],
-                                  [-0.6149, 0.3671, 0.6980, 1.21842],
-                                  [-0.2304, -0.9300, 0.2862, 0.05350],
-                                  [0.0000, 0.0000, 0.0000, 1.00]])#here the params should be in m or mm
-    #original good one by wyg
- 
     WORK_SPACE = [
-    [-0.14, 0.12],
-    [-0.12, 0.1],
-    [0.1, 0.35]
+    [-0.14, 0.1],
+    [-0.03, 0.2],
+    [0, 0.1]#-0.0185 is tested to be the best value
 ]
-
     # scale
-    point_xyz = points[..., :3]*0.0002500000118743628
-    point_homogeneous = np.hstack((point_xyz, np.ones((point_xyz.shape[0], 1))))
-    point_homogeneous = np.dot(point_homogeneous, extrinsics_matrix)
-    point_xyz = point_homogeneous[..., :-1]
-    points[..., :3] = point_xyz
-    
-    #  # crop
+    points = points[..., :3]*0.0002500000118743628
+
+     # crop
     points = points[np.where((points[..., 0] > WORK_SPACE[0][0]) & (points[..., 0] < WORK_SPACE[0][1]) &
                                 (points[..., 1] > WORK_SPACE[1][0]) & (points[..., 1] < WORK_SPACE[1][1]) &
                                 (points[..., 2] > WORK_SPACE[2][0]) & (points[..., 2] < WORK_SPACE[2][1]))]
-
-    
-    points_xyz = points[..., :3]
-    points_xyz, _= farthest_point_sampling(points_xyz, num_points, use_cuda)
+    point_xyz = points[..., :3]
+    points_xyz, _= farthest_point_sampling(point_xyz, num_points, use_cuda)
     return points_xyz
 
 def boundary(WORK_SPACE):

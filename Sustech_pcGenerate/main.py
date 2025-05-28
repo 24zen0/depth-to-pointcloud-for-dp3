@@ -8,6 +8,7 @@ from FilteringPlane import FilterPlane  # Replace with actual module name
 import open3d as o3d
 import zarr
 from typing import List, Tuple, Optional
+import time
 
 # 1. 初始化参数
 zarr_path = "/home/slam/3D-Diffusion-Policy/3D-Diffusion-Policy/data/5_26.zarr/data"
@@ -33,11 +34,16 @@ valid_frames = 0
 # for i in range(min(1, depth_from_robot.shape[0])):  # 先只处理前5帧用于调试
 
 # switch a method for looping:
-start, end = 0, 0  # 想要的范围
+start, end = 0, 20  # 想要的范围
 selected_frames = depth_from_robot[start : end+1]  # 切片获取980-984（共5帧）
+
+# 在循环开始前初始化计时变量
+total_time = 0
+frame_times = []
 
 for i, current_depth in enumerate(selected_frames, start=start): 
     print(f"\n正在处理第 {i} 帧...")
+    start_time = time.time()  # 记录帧处理开始时间
     # current_depth = depth_from_robot[i] #when using enumerate, this line is not needed
     
     # 检查深度图有效性
@@ -57,32 +63,8 @@ for i, current_depth in enumerate(selected_frames, start=start):
         
         if not isinstance(points, np.ndarray) or points.size == 0:
             raise ValueError("生成的点云为空")
-            
-        #filter
-        # 创建Open3D点云对象
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(points.astype(np.float64))
-        print(f"原始点云点数: {len(pcd.points)}")
-        # 创建平面过滤器实例（参数可根据需要调整）
-        filter = FilterPlane(
-        distance_threshold=1.1, 
-        ransac_n=3,
-        max_iterations=1000,
-        min_plane_points=90
-        )
-        # 执行平面过滤，得到去除平面后的剩余点云
-        filtered_pcd = filter.filterPlane(pcd)
-        print(f"过滤后剩余点数: {len(filtered_pcd.points)}")
-        
-        # 检查是否为空
-        if len(filtered_pcd.points) == 0:
-            print("警告: 平面过滤后无剩余点")
-            all_processed_points.append(np.zeros((1024, 3)))
-            continue
 
-        # 转换为NumPy数组并采样
-        filtered_points_np = np.asarray(filtered_pcd.points)
-        processed_points = preprocess_point_cloud(filtered_points_np)  # 确保输入为NumPy数组
+        processed_points = preprocess_point_cloud(points)  # 确保输入为NumPy数组
         print(f"处理后点云形状: {processed_points.shape}")
         
         
@@ -97,20 +79,19 @@ for i, current_depth in enumerate(selected_frames, start=start):
     except Exception as e:
         print(f"处理第 {i} 帧时出错: {str(e)}")
         all_processed_points.append(np.zeros((1024, 6)))
+        # 在每帧处理结束时计算耗时
+    frame_time = time.time() - start_time
+    frame_times.append(frame_time)
+    total_time += frame_time
+    print(f"第 {i} 帧处理耗时: {frame_time:.3f} 秒")
 
 # 5. 结果统计和保存
 print(f"\n处理完成,有效帧数: {valid_frames}/{depth_from_robot.shape[0]}")
 
 if valid_frames > 0:
     try:
-        all_processed_points = np.stack(all_processed_points, axis=0)
-        print(f"最终点云数组形状: {all_processed_points.shape}")
-        
-        # 保存结果
-        success = generate_pcd_zarr(all_processed_points, output_zarr_path)
-        if success:
-            print(f"点云已保存至: {output_zarr_path}")
+        generate_pcd_zarr(all_processed_points, output_zarr_path)  # 函数内不返回布尔值，直接报错
+        print(f"点云已保存至: {output_zarr_path}")
     except Exception as e:
-        print(f"保存结果时出错: {str(e)}")
-else:
-    print("警告: 没有有效帧被处理")
+        print(f"保存失败: {str(e)}")
+    

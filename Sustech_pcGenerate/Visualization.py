@@ -20,12 +20,12 @@ pcd = o3d.geometry.PointCloud()
 pcd.points = o3d.utility.Vector3dVector(points)
 
 # 坐标系（红色-X，绿色-Y，蓝色-Z）
-coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2)
+coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.05, origin=[0, 0, 0])
 #bounding box
 WORK_SPACE = [
-    [-0.14, 0.12],
-    [-0.12, 0.1],
-    [0.1, 0.35]
+    [-0.14, 0.1],
+    [-0.03, 0.2],
+    [0, 0.1]
 ]
 min_bound, max_bound = boundary(WORK_SPACE)
 custom_bbox = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)

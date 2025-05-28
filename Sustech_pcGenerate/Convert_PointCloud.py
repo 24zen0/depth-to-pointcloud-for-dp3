@@ -30,17 +30,13 @@ class PointCloudGenerator(object):
             [390.64122761, 0, 450.30159532],
             [0, 392.57988967, 200.70517741],
             [0, 0, 1]
-          ]) 
-
-        t = np.array([0.33916, 1.21842, 0.05350])  # in meters
-        R = np.array([[0.7542, 0.0152, 0.6564],
-                      [-0.6149, 0.3671, 0.6980],
-                      [-0.2304, -0.9300, 0.2862]])        
+          ])   
 
         # 构建 4x4 变换矩阵
-        extrinsic_matrix = np.eye(4)
-        extrinsic_matrix[:3, :3] = R
-        extrinsic_matrix[:3, 3] = t
+        extrinsic_matrix = np.array([[ -0.75422983,  -0.23041472, 0.6148548,  -700     ],
+            [-0.65643515,  0.28624051, -0.69796795, 800    ],
+            [ -0.01517426,  -0.93004055,  -0.36714346, 545  ],
+            [ 0.,          0. ,         0. ,         1.,        ]])#here the params should be in m or mm
         self.extrinsic_matrix = extrinsic_matrix
     
     def generateCroppedPointCloud(self, depth_data, save_img_dir=None, device_id=0):
@@ -59,3 +55,4 @@ class PointCloudGenerator(object):
         transformed_cloud = o3d_cloud.transform(c2w)
 
         return np.asarray(transformed_cloud.points), depth_data.squeeze()
+        # return np.asarray(o3d_cloud.points), depth_data.squeeze()
