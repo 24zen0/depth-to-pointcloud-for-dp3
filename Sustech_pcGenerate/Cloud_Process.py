@@ -1,81 +1,59 @@
-import os
-import zarr
-import pickle
-import tqdm
+"""Workspace cropping and fixed-size sampling of metric XYZ point clouds."""
 import numpy as np
-import torch
-import pytorch3d.ops as torch3d_ops
-import torchvision
-from termcolor import cprint
-import re
-import time
+
+DEFAULT_WORKSPACE = ((-0.11, 0.318), (-0.178, 0.078), (0.14, 0.55))
 
 
-import numpy as np
-import torch
-import pytorch3d.ops as torch3d_ops
-import torchvision
-import socket
-import pickle
+def farthest_point_sampling(points, num_points=1024, use_cuda=False):
+    """Return sampled points and indices; repeat indices when N < num_points.
 
-
-def farthest_point_sampling(points, num_points=1024, use_cuda=True): #For test, increase the number of the sampled points. Original: 1014
-    #points = np.asarray(points, dtype=np.float32)
-    if points.size == 0:
-        raise ValueError("输入点云为空数组！")
-    if points.ndim != 2 or points.shape[1] != 3:
-        raise ValueError(f"输入需为 (N,3) 数组，但得到形状 {points.shape}")
-    K = [num_points]
+    CPU sampling starts at index zero for reproducibility. CUDA is opt-in and
+    requires a compatible PyTorch/PyTorch3D installation.
+    """
+    points = np.asarray(points, dtype=np.float32)
+    if points.ndim != 2 or points.shape[1] != 3 or len(points) == 0:
+        raise ValueError("Expected a nonempty (N, 3) point array")
+    if not np.isfinite(points).all() or num_points <= 0:
+        raise ValueError("Points must be finite and num_points positive")
+    count = min(num_points, len(points))
     if use_cuda:
-        points = torch.from_numpy(points).cuda()
-        sampled_points, indices = torch3d_ops.sample_farthest_points(points=points.unsqueeze(0), K=K)
-        sampled_points = sampled_points.squeeze(0)
-        sampled_points = sampled_points.cpu().numpy()
+        import torch
+        from pytorch3d.ops import sample_farthest_points
+        tensor = torch.as_tensor(points, device="cuda").unsqueeze(0)
+        _, indices = sample_farthest_points(tensor, K=count)
+        chosen = indices[0].cpu().numpy()
     else:
-        points = torch.from_numpy(points)
-        sampled_points, indices = torch3d_ops.sample_farthest_points(points=points.unsqueeze(0), K=K)
-        sampled_points = sampled_points.squeeze(0)
-        sampled_points = sampled_points.numpy()
-
-    return sampled_points, indices
-
-def preprocess_point_cloud(points, use_cuda=True):
-    
-    num_points = 1024
-
-    extrinsics_matrix = np.array([[0.7542, 0.0152, 0.6564, 0.33916],
-                                  [-0.6149, 0.3671, 0.6980, 1.21842],
-                                  [-0.2304, -0.9300, 0.2862, 0.05350],
-                                  [0.0000, 0.0000, 0.0000, 1.00]])#here the params should be in m or mm
+        chosen = np.empty(count, dtype=np.int64)
+        distance = np.full(len(points), np.inf)
+        index = 0
+        for i in range(count):
+            chosen[i] = index
+            distance = np.minimum(distance, ((points - points[index]) ** 2).sum(axis=1))
+            distance[chosen[:i + 1]] = -1
+            index = int(distance.argmax())
+    chosen = np.resize(chosen, num_points)
+    return points[chosen], chosen
 
 
-    WORK_SPACE = [
-        [-0.11, 0.318],
-        [-0.178, 0.078],
-        [0.14, 0.55]
-    ]
+def preprocess_point_cloud(points, use_cuda=False, workspace=DEFAULT_WORKSPACE, num_points=1024):
+    """Crop already transformed, metre-valued XYZ/XYZRGB; sample exactly once.
 
-    # scale
-    point_xyz = points[..., :3]*0.0002500000118743628
-    point_homogeneous = np.hstack((point_xyz, np.ones((point_xyz.shape[0], 1))))
-    point_homogeneous = np.dot(point_homogeneous, extrinsics_matrix)
-    point_xyz = point_homogeneous[..., :-1]
-    points[..., :3] = point_xyz
-    
-     # crop
-    points = points[np.where((points[..., 0] > WORK_SPACE[0][0]) & (points[..., 0] < WORK_SPACE[0][1]) &
-                                (points[..., 1] > WORK_SPACE[1][0]) & (points[..., 1] < WORK_SPACE[1][1]) &
-                                (points[..., 2] > WORK_SPACE[2][0]) & (points[..., 2] < WORK_SPACE[2][1]))]
+    No depth scaling or extrinsic transformation is applied here. Extra columns
+    (e.g. RGB) follow the selected XYZ indices without changing their values.
+    """
+    points = np.asarray(points)
+    if points.ndim != 2 or points.shape[1] < 3:
+        raise ValueError("Expected (N, 3+) points")
+    bounds = np.asarray(workspace, dtype=float)
+    if bounds.shape != (3, 2) or not np.all(bounds[:, 0] < bounds[:, 1]):
+        raise ValueError("workspace must contain three increasing [min, max] pairs")
+    xyz = points[:, :3]
+    mask = np.isfinite(xyz).all(axis=1) & (xyz > bounds[:, 0]).all(axis=1) & (xyz < bounds[:, 1]).all(axis=1)
+    cropped = points[mask]
+    _, indices = farthest_point_sampling(cropped[:, :3], num_points, use_cuda)
+    return cropped[indices].astype(np.float32)
 
-    
-    points_xyz = points[..., :3]
-    points_xyz, sample_indices = farthest_point_sampling(points_xyz, num_points, use_cuda)
-    sample_indices = sample_indices.cpu()
-    points_rgb = points[sample_indices, 3:][0]
-    points = np.hstack((points_xyz, points_rgb))
-    return points
 
-def boundary(WORK_SPACE):
-    min_bound = np.array([WORK_SPACE[0][0], WORK_SPACE[1][0], WORK_SPACE[2][0]])  # 最小角点 [x_min, y_min, z_min]
-    max_bound = np.array([WORK_SPACE[0][1], WORK_SPACE[1][1], WORK_SPACE[2][1]])  # 最大角点 [x_max, y_max, z_max]
-    return min_bound, max_bound
+def boundary(workspace):
+    bounds = np.asarray(workspace)
+    return bounds[:, 0], bounds[:, 1]

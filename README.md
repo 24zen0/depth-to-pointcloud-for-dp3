@@ -36,60 +36,69 @@ All Python modules are under [`Sustech_pcGenerate/`](Sustech_pcGenerate/).
 | File | Purpose |
 | --- | --- |
 | [`Inputing_zarr.py`](Sustech_pcGenerate/Inputing_zarr.py) | Read the `depth` array; write a point-cloud array to a Zarr group |
-| [`Convert_PointCloud.py`](Sustech_pcGenerate/Convert_PointCloud.py) | Open3D pinhole back-projection and a camera-to-world transform |
+| [`Convert_PointCloud.py`](Sustech_pcGenerate/Convert_PointCloud.py) | NumPy pinhole back-projection and an explicit camera-to-world transform |
 | [`Cloud_Process.py`](Sustech_pcGenerate/Cloud_Process.py) | Workspace bounds, point preprocessing, and PyTorch3D farthest-point sampling |
 | [`FilteringPlane.py`](Sustech_pcGenerate/FilteringPlane.py) | RANSAC plane detection, removal, and visualization helpers |
 | [`RealSenseCamera.py`](Sustech_pcGenerate/RealSenseCamera.py) | Live RealSense depth acquisition and point-cloud visualization |
 | [`Visualization.py`](Sustech_pcGenerate/Visualization.py) | Inspect saved point clouds with a workspace bounding box |
 | [`VisDepth.py`](Sustech_pcGenerate/VisDepth.py) | Inspect depth data |
-| [`main.py`](Sustech_pcGenerate/main.py) | Original camera-specific debug driver, processing up to ten frames |
+| [`main.py`](Sustech_pcGenerate/main.py) | Calibrated sequence conversion CLI with validity flags |
 
 ## Data interface
 
 - **Input:** a Zarr group containing `depth`, with a frame sequence shaped `(T, H, W)`. If the recording has an outer `data` group, pass the path ending in `.zarr/data`.
-- **Projection:** a depth frame plus camera intrinsics produces XYZ points. The Open3D path applies the extrinsic transform stored in `PointCloudGenerator`.
-- **Sampling:** `farthest_point_sampling(points, num_points=1024, use_cuda=True)` takes an `(N, 3)` NumPy array and returns sampled XYZ points and their indices. The default uses CUDA; `use_cuda=False` selects CPU execution.
-- **Storage:** `generate_pcd_zarr` writes a dataset named `pointcloud` by default. Its default chunk shape is for a two-dimensional array; pass a matching three-dimensional chunk shape when saving a frame sequence.
+- **Projection:** a depth frame plus camera intrinsics produces XYZ points. The conversion path applies the explicit camera-to-world transform once.
+- **Sampling:** `farthest_point_sampling(points, num_points=1024, use_cuda=False)` takes an `(N, 3)` NumPy array and returns sampled XYZ points and their indices. CPU is the default; `use_cuda=True` opts into PyTorch3D/CUDA.
+- **Storage:** `generate_pcd_zarr` writes a dataset named `pointcloud` by default. The CLI passes sequence chunks `(1, num_points, 3)` when saving frame sequences.
 
-## Inspect a recording
+## Run the conversion
 
-Clone this repository and install the dependencies for Zarr inspection:
+Install the CPU conversion dependencies and run the included synthetic example:
 
 ```bash
 git clone https://github.com/24zen0/depth-to-pointcloud-for-dp3.git
 cd depth-to-pointcloud-for-dp3
-python -m pip install numpy 'zarr<3' numcodecs
+python -m pip install -r requirements.txt
+python Sustech_pcGenerate/main.py examples/depth.npy output-example.zarr \
+  --calibration examples/calibration.json
 ```
 
-From the repository root, replace `path/to/recording.zarr/data` with your recording's depth-group path:
+Expected summary: `{"shape": [2, 1024, 3], "valid_frames": 1, "total_frames": 2}`.
+The example is a synthetic depth plane followed by an empty frame. It checks the
+conversion interface; it is not a robot experiment or a camera calibration.
+Choose a new output directory for each run; existing output is not overwritten.
+
+For a recording, replace the input with the Zarr group containing `depth`:
 
 ```bash
-python - path/to/recording.zarr/data <<'PY'
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path('Sustech_pcGenerate').resolve()))
-from Inputing_zarr import read_in_depth
-
-depth = read_in_depth(sys.argv[1])
-print('Depth shape:', depth.shape)
-print('Depth dtype:', depth.dtype)
-print('First-frame range:', depth[0].min(), depth[0].max())
-PY
+python Sustech_pcGenerate/main.py path/to/recording.zarr/data output.zarr \
+  --calibration path/to/camera.json
+python -m unittest discover -s tests -v
 ```
 
-Geometry conversion additionally uses Open3D, MuJoCo, Matplotlib, and Pillow. The sampling/preprocessing module imports PyTorch, torchvision, PyTorch3D, tqdm, and termcolor. Install PyTorch3D for the PyTorch/CUDA combination used by your policy environment. Live acquisition also requires `pyrealsense2` and a RealSense camera.
+## Calibration and output contract
 
-## Adapting the camera-specific scripts
+Use your own calibration JSON with `width`, `height`, 3x3 `intrinsics`,
+`depth_scale` (raw depth units per metre), 4x4 `camera_to_world`, and three
+`workspace` bounds in metres. The example values are synthetic, not the
+project camera calibration. The transform maps camera column vectors into the
+workspace frame; translation is in metres.
 
-Use the modules with the calibration and data layout of your own setup:
+The executable path projects depth once, applies the camera-to-workspace
+transform once, crops in that frame, and performs farthest-point sampling.
+`preprocess_point_cloud` takes already transformed metric points; it does not
+scale or transform them again. CPU sampling is deterministic and requires no
+GPU. Optional CUDA sampling through the function API requires PyTorch3D.
 
-1. Set the camera intrinsics, image dimensions, depth units, and extrinsic transform. The constants in `Convert_PointCloud.py` belong to the project camera; its constructor currently sets width and height from the same `img_size` argument.
-2. Define the crop in the transformed frame. `Cloud_Process.py` stores the project bounds as `x: (-0.11, 0.318)`, `y: (-0.178, 0.078)`, and `z: (0.14, 0.55)`, with strict inequalities.
-3. Keep one consistent scale and transform through the pipeline. `Convert_PointCloud.py` uses Open3D's transform convention; `preprocess_point_cloud` contains a separate scale and row-vector matrix operation. Adapt those paths together before composing them, so depth is not scaled or transformed twice.
-4. Match output dimensions to the policy interface. Use XYZ-only `(T, 1024, 3)` or retain color channels only when the downstream policy expects them. For a three-dimensional sequence, pass `chunk_shape=(1, 1024, 3)` to the Zarr writer when using XYZ-only data.
+The output Zarr group contains `pointcloud` shaped `(T, 1024, 3)` by default and
+`valid_frames` shaped `(T,)`. Empty/fully cropped frames remain zero-filled with
+a false validity flag; downstream training must exclude or handle these frames.
+When a valid crop has fewer than 1,024 points, selected points repeat to preserve
+the policy input shape. `--num-points` changes the fixed count.
 
-For the original `main.py` driver, first change its `imputing_zarr` import to the actual module name `Inputing_zarr` and replace the absolute dataset paths. It is a ten-frame debug script: it currently computes a preprocessed cloud but appends the sampled cloud, and uses six-channel zero arrays for failed frames. Integrating the individual functions lets you define the output format and failed-frame handling for your dataset explicitly.
+The original live-camera, RANSAC and visualization scripts remain separate
+experiments with their own optional dependencies. The CPU example does not
+exercise those scripts or establish real-robot policy performance.
 
 ## References and credit
 
