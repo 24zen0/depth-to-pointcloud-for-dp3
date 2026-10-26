@@ -37,7 +37,7 @@ All Python modules are under [`Sustech_pcGenerate/`](Sustech_pcGenerate/).
 | --- | --- |
 | [`Inputing_zarr.py`](Sustech_pcGenerate/Inputing_zarr.py) | Read the `depth` array; write a point-cloud array to a Zarr group |
 | [`Convert_PointCloud.py`](Sustech_pcGenerate/Convert_PointCloud.py) | NumPy pinhole back-projection and an explicit camera-to-world transform |
-| [`Cloud_Process.py`](Sustech_pcGenerate/Cloud_Process.py) | Workspace bounds, point preprocessing, and PyTorch3D farthest-point sampling |
+| [`Cloud_Process.py`](Sustech_pcGenerate/Cloud_Process.py) | Workspace bounds, point preprocessing, and NumPy farthest-point sampling with optional PyTorch3D/CUDA |
 | [`FilteringPlane.py`](Sustech_pcGenerate/FilteringPlane.py) | RANSAC plane detection, removal, and visualization helpers |
 | [`RealSenseCamera.py`](Sustech_pcGenerate/RealSenseCamera.py) | Live RealSense depth acquisition and point-cloud visualization |
 | [`Visualization.py`](Sustech_pcGenerate/Visualization.py) | Inspect saved point clouds with a workspace bounding box |
